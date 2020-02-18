@@ -1,4 +1,6 @@
 import platform, subprocess
+import sched, time
+s = sched.scheduler(time.monotonic, time.sleep)
 
 def checkConnection(host):
 	option = '-c'
@@ -9,11 +11,20 @@ def checkConnection(host):
 		print(f"{host} is Up")
 	else:
 		print(f"{host} is Down")
+		sendNotification(host,'Down')
+
+def sendNotification(host,state):
+	subprocess.Popen(['notify-send', f"{host} is {state}"])
+	return
 
 def program():
 	sites = []
 	with open("list.txt") as file:
-		checkConnection(file.readline())
+		for line in file:
+			host = line.strip()
+			checkConnection(host)
+	s.enter(10,1,program)
 
 if __name__ == '__main__':
-	program()
+	s.enter(10,1,program)
+	s.run()
